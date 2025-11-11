@@ -1,0 +1,132 @@
+:root {
+  --bg-color: #B4DAE8;       /* background color */
+  --primary-color: #8FBDEB;  /* main accent (nav bar, headings) */
+  --button-color: #38369A;   /* buttons */
+  --text-color: #333333;     /* default text */
+  --accent-color: #4D4AD7;
+  --bg-gradient: linear-gradient(to bottom, #0E6ECF, #8FBDEB);
+}
+
+body{
+  background-color: var(--bg-gradient);
+  margin: 0; /*ensure no gap around nav*/
+
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color:  var(--primary-color);
+  padding: 10px 20px;
+  
+}
+
+#site-name{
+  font-size: 2rem;
+  font-weight: bolder;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+
+nav ul li {
+  margin-left: 20px;
+}
+
+nav ul li a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.nav-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: var(--button-color); 
+  color: white;
+  border-radius: 6px; 
+  font-weight: bold;
+  transition: var(--bg-color) 0.3s;
+}
+
+.nav-btn:hover {
+  background-color: var(--accent-color); /* hover effect */
+  box-shadow: 0 2px 4px #38369A
+}
+
+.image-slasher {
+  position: relative;
+  width: 100vw;   /* full viewport width */
+  height: 90vh;  /* full viewport height */
+  overflow: clip;
+
+}
+
+.building {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: clip-path 0.6s ease-in-out, z-index 0.3s;
+  cursor: pointer;
+}
+
+.building img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Initial slash split */
+.ciruti {
+
+  clip-path: polygon(0 0, 60% 0, 40% 100%, 0% 100%);
+  z-index: 1;
+}
+
+.pradd {
+  clip-path: polygon(60% 0, 100% 0, 100% 100%, 40% 100%);
+  z-index: 1;
+}
+
+/* Hover effect: expand fully */
+.ciruti:hover {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+  z-index: 2;
+}
+
+.pradd:hover {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+  z-index: 2;
+}
+
+.building-info {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-color: var(--button-color); /* semi-transparent background */
+  color: white;
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.building-info h3 {
+  margin: 0;
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.building-info p {
+  margin: 5px 0 0;
+  font-size: 1.5em;
+}
+
+
+
