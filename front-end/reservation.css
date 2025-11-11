@@ -1,0 +1,166 @@
+:root {
+  --bg-color: #B4DAE8;       /* background color */
+  --primary-color: #8FBDEB;  /* main accent (nav bar, headings) */
+  --button-color: #38369A;   /* buttons */
+  --text-color: #333333;     /* default text */
+  --accent-color: #4D4AD7;
+	--bg-gradient: linear-gradient(to bottom , #b2d1f0 0%, #b2d1f0 40%, #dce5f1 70%, #dce5f1 100%);
+
+}
+
+body{
+  background: var(--bg-gradient);
+  margin: 0; /*ensure no gap around nav*/
+
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color:  var(--primary-color);
+  padding: 10px 20px;
+	margin-bottom: 2rem;
+  
+}
+
+#site-name{
+  font-size: 2rem;
+  font-weight: bolder;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+
+nav ul li {
+  margin-left: 20px;
+}
+
+nav ul li a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.nav-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: var(--button-color); 
+  color: white;
+  border-radius: 6px; 
+  font-weight: bold;
+  transition: var(--bg-color) 0.3s;
+}
+
+.nav-btn:hover {
+  background-color: var(--accent-color); /* hover effect */
+  box-shadow: 0 2px 4px #38369A
+}
+
+.reservation-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* or center if you want vertical centering */
+  gap: 2rem;
+  padding: 2rem;
+  flex-wrap: wrap;
+}
+
+.reservation-table {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+	background-color: white;
+}
+
+.reservation-page {
+	display: flex;
+  flex: 1;
+  height: calc(100vh - 60px);
+}
+
+.calendar-header {
+	width: 100%;
+	height: 20%;
+	font-size: 1rem;
+	font-weight: bold;
+	text-align: center;
+	padding: 0;
+	color: #100e0e;
+}
+
+.calendar-panel {
+  max-width: 280px;
+	max-height: 600px;
+  padding: 1rem;
+  background: #ffffff;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+	border-radius: 16px;
+}
+
+#calendar-widget {
+	display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  width: 100%;
+}
+
+#calendar-widget div {
+  aspect-ratio: 1 / 1; /* makes each box square */
+  font-size: 0.85rem;
+  background: #eee;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+#calendar-widget div:hover {
+  background: #76A6D7;
+}
+
+#calendar-widget .selected {
+  background: #76A6D7;
+  color: white;
+}
+
+.reservation-table {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+	font-weight: 400;
+	border-radius: 4px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+	color: #38369A;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+td.free {
+  
+	background-color: #e7edf9;
+  cursor: pointer;
+}
+
+td.booked {
+  background-color: var(--accent-color);
+  color: white;
+}
