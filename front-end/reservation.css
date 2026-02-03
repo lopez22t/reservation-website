@@ -155,8 +155,11 @@ th, td {
 }
 
 td.free {
-  
 	background-color: #e7edf9;
+}
+
+td.free:hover {
+	background-color: #76A6D7;
   cursor: pointer;
 }
 
