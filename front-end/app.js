@@ -13,8 +13,9 @@ const timeSlots = [
   "21:00"
 ];
 
+const saved = localStorage.getItem("reservations");
 let selectedDate = new Date();
-let reservations = [];
+let reservations = saved ? JSON.parse(saved) : [];
 
 function renderCalendar() {
   const calendar = document.getElementById("calendar-widget");
@@ -82,6 +83,8 @@ function reserveSlot(building, room, date, time) {
     date: date.toDateString(),
     time
   });
+
+  localStorage.setItem("reservations", JSON.stringify(reservations));
 }
 
 function renderReservationTable() {
