@@ -46,33 +46,8 @@ Backend API for the study room reservation system built with Node.js, Express, a
 - MongoDB (local or cloud)
 - npm or yarn
 
-### Installation
-1. Clone the repository
-2. Navigate to the back-end directory
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
 
-4. Create a `.env` file in the back-end directory:
-   ```bash
-   cp .env.example .env
-   ```
-
-5. Update `.env` with your MongoDB connection string and JWT secret
-
-### Running the Server
-- Development (with auto-reload):
-  ```bash
-  npm run dev
-  ```
-
-- Production:
-  ```bash
-  npm start
-  ```
-
-The server will start on port 5000 (or the port specified in `.env`)
+### Running the Server (TBD)
 
 ## API Endpoints (To Be Implemented)
 
@@ -110,17 +85,3 @@ The server will start on port 5000 (or the port specified in `.env`)
 - Reservation: room + reservationDate + startTime + endTime + status (prevents double-booking)
 - SignIn: user + createdAt (for history queries)
 
-## Security Features
-- Password hashing with bcryptjs
-- JWT authentication
-- Input validation with express-validator
-- CORS enabled
-- Environment variables for sensitive data
-
-## Next Steps
-1. Implement authentication routes
-2. Create middleware for authorization
-3. Implement reservation logic with conflict detection
-4. Create room occupancy update endpoints
-5. Add error handling and logging
-6. Write tests
