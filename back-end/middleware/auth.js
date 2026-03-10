@@ -21,7 +21,7 @@ const authMiddleware = (req, res, next) => {
         }
 
         // Verify token using JWT secret
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key_here');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         // Attach user info to request object for use in route handlers
         req.user = decoded;

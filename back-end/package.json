@@ -5,7 +5,9 @@
     "main": "server.js",
     "scripts": {
         "start": "node server.js",
-        "dev": "nodemon server.js"
+        "dev": "nodemon server.js",
+        "seed": "node seeds/seedData.js",
+        "seed:reset": "node seeds/seedData.js --reset"
     },
     "dependencies": {
         "express": "^4.18.2",

@@ -4,7 +4,26 @@
  */
 const express = require('express');
 const { Building, Room } = require('../models');
-const authMiddleware = require('../middleware/auth');
+
+// Single-building mode: the app should operate only for this building
+const MAIN_BUILDING_NAME = 'Pratt Music hall';
+
+async function getMainBuilding() {
+    let building = await Building.findOne({ name: MAIN_BUILDING_NAME });
+    if (!building) {
+        // Create a minimal default building if missing
+        building = new Building({
+            name: MAIN_BUILDING_NAME,
+            code: 'PRATT',
+            description: 'Main building: Pratt Music hall',
+            totalFloors: 3,
+            isActive: true
+        });
+        await building.save();
+    }
+    return building;
+}
+// Authentication removed for public endpoints
 
 const router = express.Router();
 
@@ -15,24 +34,15 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
     try {
-        const { active } = req.query;
-
-        // Build filter object
-        const filter = {};
-        if (active !== undefined) {
-            filter.isActive = active === 'true';
-        }
-
-        const buildings = await Building.find(filter).sort({ name: 1 });
-
+        const building = await getMainBuilding();
         res.json({
-            message: 'Buildings retrieved successfully',
-            count: buildings.length,
-            data: buildings
+            message: 'Building retrieved successfully',
+            count: 1,
+            data: building
         });
     } catch (error) {
         console.error('Get buildings error:', error);
-        res.status(500).json({ message: 'Error retrieving buildings' });
+        res.status(500).json({ message: 'Error retrieving building' });
     }
 });
 
@@ -43,19 +53,19 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
     try {
-        const building = await Building.findById(req.params.id);
+        const mainBuilding = await getMainBuilding();
 
-        if (!building) {
-            return res.status(404).json({ message: 'Building not found' });
+        const id = req.params.id.toString();
+        if (id !== mainBuilding._id.toString() && id.toLowerCase() !== 'pratt' && id.toLowerCase() !== 'main') {
+            return res.status(404).json({ message: 'Building not found in single-building mode' });
         }
 
-        // Get all rooms in this building
-        const rooms = await Room.find({ building: req.params.id, isActive: true });
+        const rooms = await Room.find({ building: mainBuilding._id, isActive: true });
 
         res.json({
             message: 'Building retrieved successfully',
             data: {
-                ...building.toObject(),
+                ...mainBuilding.toObject(),
                 rooms: rooms
             }
         });
@@ -75,15 +85,16 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/rooms', async (req, res) => {
     try {
         const { floor, status } = req.query;
+        const mainBuilding = await getMainBuilding();
 
-        // Verify building exists
-        const building = await Building.findById(req.params.id);
-        if (!building) {
-            return res.status(404).json({ message: 'Building not found' });
+        // Verify requested id refers to the main building in single-building mode
+        const id = req.params.id.toString();
+        if (id !== mainBuilding._id.toString() && id.toLowerCase() !== 'pratt' && id.toLowerCase() !== 'main') {
+            return res.status(404).json({ message: 'Building not found in single-building mode' });
         }
 
-        // Build filter for rooms
-        const filter = { building: req.params.id, isActive: true };
+        // Build filter for rooms (force to main building)
+        const filter = { building: mainBuilding._id, isActive: true };
         if (floor) filter.floor = parseInt(floor);
         if (status) filter.occupancyStatus = status;
 
@@ -91,7 +102,7 @@ router.get('/:id/rooms', async (req, res) => {
 
         res.json({
             message: 'Building rooms retrieved successfully',
-            buildingName: building.name,
+            buildingName: mainBuilding.name,
             count: rooms.length,
             data: rooms
         });
@@ -111,43 +122,8 @@ router.get('/:id/rooms', async (req, res) => {
  * @body {string} description - Building description
  * @body {number} totalFloors - Number of floors
  */
-router.post('/', authMiddleware, async (req, res) => {
-    try {
-        // Check if user is admin
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Only admins can create buildings' });
-        }
-
-        const { name, code, location, description, totalFloors } = req.body;
-
-        if (!name || !code) {
-            return res.status(400).json({ message: 'Building name and code are required' });
-        }
-
-        // Check if building already exists
-        const existingBuilding = await Building.findOne({ $or: [{ name }, { code: code.toUpperCase() }] });
-        if (existingBuilding) {
-            return res.status(409).json({ message: 'Building with this name or code already exists' });
-        }
-
-        const building = new Building({
-            name,
-            code: code.toUpperCase(),
-            location,
-            description,
-            totalFloors: totalFloors || 1
-        });
-
-        await building.save();
-
-        res.status(201).json({
-            message: 'Building created successfully',
-            data: building
-        });
-    } catch (error) {
-        console.error('Create building error:', error);
-        res.status(500).json({ message: 'Error creating building' });
-    }
+router.post('/', async (req, res) => {
+    return res.status(403).json({ message: 'Single-building mode: building creation disabled' });
 });
 
 /**
@@ -155,35 +131,8 @@ router.post('/', authMiddleware, async (req, res) => {
  * Update building information
  * Requires: Admin role
  */
-router.put('/:id', authMiddleware, async (req, res) => {
-    try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Only admins can update buildings' });
-        }
-
-        const { name, description, imageUrl, isActive, totalFloors } = req.body;
-
-        let building = await Building.findById(req.params.id);
-        if (!building) {
-            return res.status(404).json({ message: 'Building not found' });
-        }
-
-        if (name) building.name = name;
-        if (description) building.description = description;
-        if (imageUrl) building.imageUrl = imageUrl;
-        if (isActive !== undefined) building.isActive = isActive;
-        if (totalFloors) building.totalFloors = totalFloors;
-
-        await building.save();
-
-        res.json({
-            message: 'Building updated successfully',
-            data: building
-        });
-    } catch (error) {
-        console.error('Update building error:', error);
-        res.status(500).json({ message: 'Error updating building' });
-    }
+router.put('/:id', async (req, res) => {
+    return res.status(403).json({ message: 'Single-building mode: building updates disabled' });
 });
 
 module.exports = router;

@@ -4,7 +4,18 @@
  */
 const express = require('express');
 const { Room, Building } = require('../models');
-const authMiddleware = require('../middleware/auth');
+
+// Single-building mode helper
+const MAIN_BUILDING_NAME = 'Pratt Music hall';
+async function getMainBuilding() {
+    let building = await Building.findOne({ name: MAIN_BUILDING_NAME });
+    if (!building) {
+        building = new Building({ name: MAIN_BUILDING_NAME, code: 'PRATT', description: 'Main building: Pratt Music hall', totalFloors: 3, isActive: true });
+        await building.save();
+    }
+    return building;
+}
+// Authentication removed: room management is open (no JWT)
 
 const router = express.Router();
 
@@ -19,11 +30,12 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
     try {
-        const { building, floor, status, roomType, minCapacity } = req.query;
+        const { floor, status, roomType, minCapacity } = req.query;
 
-        // Build filter object
-        const filter = { isActive: true };
-        if (building) filter.building = building;
+        const mainBuilding = await getMainBuilding();
+
+        // Build filter object and force building to main building
+        const filter = { isActive: true, building: mainBuilding._id };
         if (floor) filter.floor = parseInt(floor);
         if (status) filter.occupancyStatus = status;
         if (roomType) filter.roomType = roomType;
@@ -31,7 +43,7 @@ router.get('/', async (req, res) => {
 
         const rooms = await Room.find(filter)
             .populate('building', 'name code location')
-            .sort({ building: 1, floor: 1, roomNumber: 1 });
+            .sort({ floor: 1, roomNumber: 1 });
 
         res.json({
             message: 'Rooms retrieved successfully',
@@ -52,15 +64,16 @@ router.get('/', async (req, res) => {
  */
 router.get('/available', async (req, res) => {
     try {
-        const { building, minCapacity } = req.query;
+        const { minCapacity } = req.query;
 
-        const filter = { isActive: true, occupancyStatus: 'available' };
-        if (building) filter.building = building;
+        const mainBuilding = await getMainBuilding();
+
+        const filter = { isActive: true, occupancyStatus: 'available', building: mainBuilding._id };
         if (minCapacity) filter.capacity = { $gte: parseInt(minCapacity) };
 
         const rooms = await Room.find(filter)
             .populate('building', 'name code')
-            .sort({ building: 1, floor: 1 });
+            .sort({ floor: 1 });
 
         res.json({
             message: 'Available rooms retrieved successfully',
@@ -108,33 +121,29 @@ router.get('/:id', async (req, res) => {
  * @body {string} roomType - Room type (study, lab, meeting, group-study)
  * @body {array} amenities - Array of amenities
  */
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Only admins can create rooms' });
-        }
-
         const { roomNumber, building, floor, capacity, roomType, amenities, operatingHours } = req.body;
 
         if (!roomNumber || !building || floor === undefined || !capacity) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
-        // Verify building exists
-        const buildingExists = await Building.findById(building);
-        if (!buildingExists) {
-            return res.status(404).json({ message: 'Building not found' });
+        // Verify building exists and belongs to single-building mode
+        const mainBuilding = await getMainBuilding();
+        if (building && building.toString() !== mainBuilding._id.toString()) {
+            return res.status(400).json({ message: 'Rooms must be created in the Pratt Music hall (single-building mode)' });
         }
 
-        // Check for duplicate room in same building/floor
-        const existingRoom = await Room.findOne({ building, floor, roomNumber });
+        // Check for duplicate room in same main building/floor
+        const existingRoom = await Room.findOne({ building: mainBuilding._id, floor, roomNumber });
         if (existingRoom) {
             return res.status(409).json({ message: 'Room already exists in this building/floor' });
         }
 
         const room = new Room({
             roomNumber,
-            building,
+            building: mainBuilding._id,
             floor,
             capacity,
             roomType: roomType || 'study',
@@ -159,12 +168,8 @@ router.post('/', authMiddleware, async (req, res) => {
  * Update room information
  * Requires: Admin role
  */
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Only admins can update rooms' });
-        }
-
         const { capacity, amenities, operatingHours, notes, isActive, occupancyStatus } = req.body;
 
         let room = await Room.findById(req.params.id);

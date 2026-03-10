@@ -1,41 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <title>MHC</title>
-    <link rel="stylesheet" href="main.css">
-  </head>
-  <body>
-    <script src="index.js"></script>
-    <nav>
-      <div id="site-name">MHC Room Reservation</div>
-      <ul>
-        <li><a href="index.html" class="nav-btn">Home</a></li>
-        <li><a href="index.html" class="nav-btn">Login</a></li>
-      </ul>
-    </nav>
 
-    <div class="image-slasher">
-      <div class="building ciruti" onclick="location.href='reservation.html?building=Ciruti'">
-        <img src="assets/cirutiroom.jpg" alt="Ciruti">
-        <div class="building-info">
-          <h3>Ciruti</h3>
-          <p>Available rooms: 3</p>
-        </div>
-      </div>
-      <div class="building pradd" onclick="location.href='reservation.html?building=Pratt'">
-        <img src="assets/pradt.jpg" alt="Pratt">
-        <div class="building-info">
-          <h3>Pratt</h3>
-          <p>Available rooms: 2</p>
-        </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+  <title>MHC</title>
+  <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+  <script src="index.js"></script>
+  <nav>
+    <div id="site-name">MHC Room Reservation</div>
+    <ul>
+      <li><a href="index.html" class="nav-btn">Home</a></li>
+      <li><a href="#" id="loginBtn" class="nav-btn">Login</a></li>
+    </ul>
+  </nav>
+
+  <div class="image-slasher">
+    <div class="building pradd" onclick="location.href='reservation.html'">
+      <img src="assets/pradt.jpg" alt="Pratt Music Hall">
+      <div class="building-info">
+        <h3>Pratt Music Hall</h3>
+        <p>Available rooms: 2</p>
       </div>
     </div>
-    
-  </body>
+
+    <!-- Auth + Reservations Modal -->
+    <div id="loginModal" class="modal">
+      <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <h2 id="modalTitle">Account</h2>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button id="logoutBtn" style="display:none">Logout</button>
+            <button id="closeLogin">Close</button>
+          </div>
+        </div>
+
+        <div id="authContainer">
+          <p id="authMessage">Sign in to view and manage your reservations.</p>
+          <form id="loginForm">
+            <label>Email</label>
+            <input type="email" id="loginEmail" required />
+            <label>Password</label>
+            <input type="password" id="loginPassword" required />
+            <div style="margin-top:8px; display:flex; gap:8px;">
+              <button id="doLogin">Login</button>
+              <button id="showSignup" type="button">Sign up</button>
+            </div>
+          </form>
+
+          <form id="signupForm" style="display:none; margin-top:10px;">
+            <label>First name</label>
+            <input id="signupFirst" />
+            <label>Last name</label>
+            <input id="signupLast" />
+            <label>Email</label>
+            <input type="email" id="signupEmail" />
+            <label>Password</label>
+            <input type="password" id="signupPassword" />
+            <div style="margin-top:8px; display:flex; gap:8px;">
+              <button id="doSignup" type="button">Create account</button>
+              <button id="showLogin" type="button">Back to login</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="reservationsContainer" style="display:none; margin-top:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div id="userInfo"></div>
+            <button id="refreshReservations">Refresh</button>
+          </div>
+          <div id="reservationsList">Loading...</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</body>
+
 </html>
