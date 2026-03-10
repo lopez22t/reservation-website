@@ -15,6 +15,11 @@ app.use(cors());
 // Parse incoming JSON request bodies
 app.use(express.json());
 
+// Serve front-end static files from sibling `front-end` directory
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../front-end')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../front-end/index.html')));
+
 // ==================== DATABASE CONNECTION ====================
 // Connect to MongoDB using connection string from environment variables
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/study-room-reservation')

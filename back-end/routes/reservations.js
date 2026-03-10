@@ -4,7 +4,20 @@
  */
 const express = require('express');
 const { Reservation, Room, Building, User } = require('../models');
+
+// Import authentication middleware
 const authMiddleware = require('../middleware/auth');
+
+// Single-building mode helper
+const MAIN_BUILDING_NAME = 'Pratt Music hall';
+async function getMainBuilding() {
+    let building = await Building.findOne({ name: MAIN_BUILDING_NAME });
+    if (!building) {
+        building = new Building({ name: MAIN_BUILDING_NAME, code: 'PRATT', description: 'Main building: Pratt Music hall', totalFloors: 3, isActive: true });
+        await building.save();
+    }
+    return building;
+}
 
 const router = express.Router();
 
@@ -49,8 +62,13 @@ router.get('/', authMiddleware, async (req, res) => {
     try {
         const { status, from, to } = req.query;
 
-        const filter = { user: req.user.userId };
+        // Get user from JWT token
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.json({ message: 'User reservations retrieved successfully', count: 0, data: [] });
+        }
 
+        const filter = { user: user._id };
         if (status) filter.status = status;
 
         if (from || to) {
@@ -78,6 +96,7 @@ router.get('/', authMiddleware, async (req, res) => {
 /**
  * GET /api/reservations/:id
  * Get specific reservation details
+ * Requires: Valid JWT token
  */
 router.get('/:id', authMiddleware, async (req, res) => {
     try {
@@ -90,15 +109,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ message: 'Reservation not found' });
         }
 
-        // Check if user owns this reservation (unless admin)
-        if (reservation.user._id.toString() !== req.user.userId && req.user.role !== 'admin') {
+        // Verify user owns this reservation
+        if (reservation.user._id.toString() !== req.user.userId) {
             return res.status(403).json({ message: 'Unauthorized' });
         }
 
-        res.json({
-            message: 'Reservation retrieved successfully',
-            data: reservation
-        });
+        res.json({ message: 'Reservation retrieved successfully', data: reservation });
     } catch (error) {
         console.error('Get reservation error:', error);
         res.status(500).json({ message: 'Error retrieving reservation' });
@@ -110,7 +126,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
  * Create a new room reservation
  * Requires: Valid JWT token
  * @body {string} room - Room ID
- * @body {string} building - Building ID
  * @body {string} reservationDate - Reservation date (YYYY-MM-DD)
  * @body {string} startTime - Start time (HH:MM)
  * @body {string} endTime - End time (HH:MM)
@@ -120,11 +135,17 @@ router.get('/:id', authMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, async (req, res) => {
     try {
-        const { room, building, reservationDate, startTime, endTime, purpose, numberOfPeople, notes } = req.body;
+        const { room, reservationDate, startTime, endTime, purpose, numberOfPeople, notes } = req.body;
 
         // Validate required fields
-        if (!room || !building || !reservationDate || !startTime || !endTime || !purpose || !numberOfPeople) {
+        if (!room || !reservationDate || !startTime || !endTime || !purpose || !numberOfPeople) {
             return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // Get user from JWT token
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
         }
 
         // Verify room exists and get capacity
@@ -133,17 +154,12 @@ router.post('/', authMiddleware, async (req, res) => {
             return res.status(404).json({ message: 'Room not found' });
         }
 
-        // Check if building exists
-        const buildingData = await Building.findById(building);
-        if (!buildingData) {
-            return res.status(404).json({ message: 'Building not found' });
-        }
+        // Enforce single-building mode (use main building)
+        const mainBuilding = await getMainBuilding();
 
         // Validate capacity
         if (numberOfPeople > roomData.capacity) {
-            return res.status(400).json({
-                message: `Room capacity is ${roomData.capacity}, requested ${numberOfPeople}`
-            });
+            return res.status(400).json({ message: `Room capacity is ${roomData.capacity}, requested ${numberOfPeople}` });
         }
 
         // Check for booking conflicts
@@ -163,9 +179,9 @@ router.post('/', authMiddleware, async (req, res) => {
 
         // Create reservation
         const reservation = new Reservation({
-            user: req.user.userId,
+            user: user._id,
             room,
-            building,
+            building: mainBuilding._id,
             reservationDate: new Date(reservationDate),
             startTime,
             endTime,
@@ -182,20 +198,19 @@ router.post('/', authMiddleware, async (req, res) => {
             .populate('room', 'roomNumber')
             .populate('building', 'name');
 
-        res.status(201).json({
-            message: 'Reservation created successfully',
-            data: populatedReservation
-        });
+        res.status(201).json({ message: 'Reservation created successfully', data: populatedReservation });
     } catch (error) {
         console.error('Create reservation error:', error);
         res.status(500).json({ message: 'Error creating reservation' });
     }
 });
 
+// Removed public-only endpoint; unified POST /api/reservations now accepts an `email` to identify the user.
+
 /**
  * PUT /api/reservations/:id
  * Update reservation details (only if pending)
- * Requires: User owns reservation or is admin
+ * Requires: Valid JWT token - user must own the reservation
  */
 router.put('/:id', authMiddleware, async (req, res) => {
     try {
@@ -206,8 +221,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ message: 'Reservation not found' });
         }
 
-        // Check authorization
-        if (reservation.user.toString() !== req.user.userId && req.user.role !== 'admin') {
+        // Verify user owns this reservation
+        if (reservation.user.toString() !== req.user.userId) {
             return res.status(403).json({ message: 'Unauthorized' });
         }
 
@@ -272,27 +287,22 @@ router.put('/:id', authMiddleware, async (req, res) => {
 /**
  * DELETE /api/reservations/:id
  * Cancel a reservation
- * Requires: User owns reservation or is admin
- * @body {string} reason - Cancellation reason
+ * Requires: Valid JWT token - user must own the reservation
+ * @body {string} reason - Cancellation reason (optional)
  */
 router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const { reason } = req.body;
 
         const reservation = await Reservation.findById(req.params.id);
-        if (!reservation) {
-            return res.status(404).json({ message: 'Reservation not found' });
-        }
+        if (!reservation) return res.status(404).json({ message: 'Reservation not found' });
 
-        // Check authorization
-        if (reservation.user.toString() !== req.user.userId && req.user.role !== 'admin') {
+        // Verify user owns this reservation
+        if (reservation.user.toString() !== req.user.userId) {
             return res.status(403).json({ message: 'Unauthorized' });
         }
 
-        // Can only cancel pending or confirmed reservations
-        if (!['pending', 'confirmed'].includes(reservation.status)) {
-            return res.status(400).json({ message: 'Cannot cancel completed or already cancelled reservations' });
-        }
+        if (!['pending', 'confirmed'].includes(reservation.status)) return res.status(400).json({ message: 'Cannot cancel completed or already cancelled reservations' });
 
         reservation.status = 'cancelled';
         reservation.cancelledAt = new Date();
@@ -301,10 +311,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
         await reservation.save();
 
-        res.json({
-            message: 'Reservation cancelled successfully',
-            data: reservation
-        });
+        res.json({ message: 'Reservation cancelled successfully', data: reservation });
     } catch (error) {
         console.error('Cancel reservation error:', error);
         res.status(500).json({ message: 'Error cancelling reservation' });
