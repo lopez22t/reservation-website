@@ -121,21 +121,56 @@ http://localhost:5000
 - Your reservations will appear
 - You can Edit or Cancel each one
 
-### 5. Test Check-In/Check-Out
+### 5. Test Check-In/Check-Out (NEW FEATURE)
 
-Currently check-in endpoints exist but frontend UI not yet implemented. You can test via API:
+After making a reservation, you can test the new check-in/check-out system:
 
+**Option A: Via Frontend UI (Recommended)**
+- Go to home page (click "Home" or "Login")
+- Your reservations will appear with a **Check-In** button (green)
+- Click "Check-In" to record your entry to the room
+- Button changes to **Check-Out** once checked in
+- Click "Check-Out" to end your session
+- View time spent and history in the "Check-In History" tab
+
+**Option B: Via API (for testing)**
 ```bash
+# Get JWT token from login response first
+# Then use it as YOUR_JWT_TOKEN below
+
 # Check-in
 curl -X POST http://localhost:5000/api/signin \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"reservation":"RESERVATION_ID","room":"ROOM_ID","building":"BUILDING_ID"}'
+  -d '{
+    "reservation":"RESERVATION_ID",
+    "room":"ROOM_ID",
+    "building":"BUILDING_ID"
+  }'
 
 # Check-out
 curl -X POST http://localhost:5000/api/signin/SIGNIN_ID/checkout \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# View check-in history
+curl -X GET http://localhost:5000/api/signin/history \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
+
+### 6. View Room Occupancy (NEW FEATURE)
+
+- Go to the Reservation Page (click on "Pratt Music Hall")
+- At the top, you'll see **"Room Occupancy (Real-time)"** display
+- Each room shows:
+  - Current occupancy vs capacity (e.g., "3/6")
+  - Percentage filled
+  - Visual progress bar
+  - Color-coded status:
+    - **Green**: Low occupancy (0-50%)
+    - **Yellow**: Medium occupancy (50-80%)
+    - **Red**: High occupancy (80-100%)
 
 ---
 

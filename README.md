@@ -24,6 +24,7 @@ http://localhost:5000
 ## 📚 Documentation
 
 - **[SETUP.md](SETUP.md)** - Complete setup guide with troubleshooting
+- **[GOOGLE_CALENDAR_SETUP.md](GOOGLE_CALENDAR_SETUP.md)** - Google Calendar integration guide
 - **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Full feature list and status
 - **[back-end/API_DOCUMENTATION.md](back-end/API_DOCUMENTATION.md)** - API reference
 - **[back-end/README.md](back-end/README.md)** - Backend details
@@ -38,6 +39,8 @@ http://localhost:5000
 - ✅ Manage reservations (edit, cancel)
 - ✅ Track check-in/check-out history
 - ✅ Real-time room occupancy display
+- ✅ **NEW: Google Calendar integration** - Sync reservations to your calendar
+- ✅ **NEW: View Google Calendar events** in the reservation system
 
 ### For Developers
 - ✅ Full REST API with comprehensive endpoints
@@ -47,6 +50,7 @@ http://localhost:5000
 - ✅ Input validation and error handling
 - ✅ CORS enabled for frontend integration
 - ✅ Seeded test data for quick start
+- ✅ **NEW: Google Calendar API integration** (frontend OAuth)
 
 ## 🏗️ Architecture
 

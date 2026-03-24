@@ -15,7 +15,8 @@ if (!authToken) {
 }
 
 // Room list fetched from backend
-let roomsList = []; // array of { _id, roomNumber }
+let roomsList = []; // array of { _id, roomNumber, capacity, currentOccupancy }
+let roomOccupancy = {}; // map of roomId -> occupancy data
 
 function formatDateYYYYMMDD(d) {
   const y = d.getFullYear();
@@ -107,6 +108,25 @@ function renderReservationTable() {
   container.innerHTML = `<h2>${DISPLAY_NAME} – ${selectedDate.toDateString()}</h2>`;
   const rooms = roomsList.map(r => r.roomNumber);
 
+  // Add occupancy info header
+  const occupancyInfo = document.createElement("div");
+  occupancyInfo.style.marginBottom = '16px';
+  occupancyInfo.style.padding = '12px';
+  occupancyInfo.style.backgroundColor = '#f0f0f0';
+  occupancyInfo.style.borderRadius = '4px';
+  occupancyInfo.innerHTML = '<strong>Room Occupancy (Real-time):</strong><br>' +
+    roomsList.map(r => {
+      const occ = roomOccupancy[r._id] || { currentOccupancy: 0, capacity: r.capacity };
+      const occupancyPercent = Math.round((occ.currentOccupancy / occ.capacity) * 100);
+      return `<div style="font-size:14px; margin-top:4px;">
+                <strong>${r.roomNumber}:</strong> ${occ.currentOccupancy}/${occ.capacity} (${occupancyPercent}%)
+                <span style="display:inline-block; width:100px; height:8px; background:#e0e0e0; border-radius:4px; margin-left:8px; vertical-align:middle;">
+                  <span style="display:inline-block; width:${occupancyPercent}%; height:8px; background:${occupancyPercent < 50 ? '#28a745' : occupancyPercent < 80 ? '#ffc107' : '#dc3545'}; border-radius:4px;"></span>
+                </span>
+              </div>`;
+    }).join('');
+  container.appendChild(occupancyInfo);
+
   const table = document.createElement("table");
   const thead = document.createElement("thead");
   const tbody = document.createElement("tbody");
@@ -171,7 +191,15 @@ document.addEventListener("click", async e => {
         const json = await resp.json();
         if (!resp.ok) throw new Error(json.message || 'Booking failed');
 
-        alert('Reservation created');
+        alert('✓ Reservation created successfully!');
+
+        // Try to sync with Google Calendar if user is connected
+        if (window.syncReservationToGoogle && json.data) {
+          const reservation = json.data;
+          reservation.room = { roomNumber: roomObj.roomNumber, _id: roomObj._id };
+          await syncReservationToGoogle(reservation);
+        }
+
         await loadReservationsForDate();
         renderReservationTable();
       } catch (err) {
@@ -186,13 +214,46 @@ async function init() {
   try {
     const roomsResp = await fetch('/api/rooms');
     const roomsJson = await roomsResp.json();
-    roomsList = (roomsJson.data || []).map(r => ({ _id: r._id, roomNumber: r.roomNumber }));
+    roomsList = (roomsJson.data || []).map(r => ({
+      _id: r._id,
+      roomNumber: r.roomNumber,
+      capacity: r.capacity,
+      currentOccupancy: r.currentOccupancy || 0
+    }));
+
+    // Load occupancy for all rooms
+    await loadRoomOccupancy();
+
+    // Load Google Calendar events if available (wait for Google API to be ready)
+    if (window.loadGoogleCalendarEvents) {
+      setTimeout(() => {
+        window.loadGoogleCalendarEvents(
+          new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
+          new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0)
+        );
+      }, 1000);
+    }
 
     await loadReservationsForDate();
     renderCalendar();
     renderReservationTable();
   } catch (err) {
     console.error('Init error', err);
+  }
+}
+
+// Load real-time occupancy for all rooms
+async function loadRoomOccupancy() {
+  try {
+    for (const room of roomsList) {
+      const resp = await fetch(`/api/signin/room/${room._id}`);
+      const json = await resp.json();
+      if (resp.ok && json.roomData) {
+        roomOccupancy[room._id] = json.roomData;
+      }
+    }
+  } catch (err) {
+    console.error('Error loading room occupancy:', err);
   }
 }
 

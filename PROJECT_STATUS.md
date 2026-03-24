@@ -1,103 +1,140 @@
 # Project Status Report
 
-## ✅ Completed Fixes (Immediate Priorities)
+## ✅ Completed Implementations
 
-### 1. Security - JWT & Environment Configuration
-- ✅ Created `.env` file template with proper configuration
-- ✅ Removed hardcoded JWT secrets from all route handlers
-- ✅ Updated all authentication handlers to require `JWT_SECRET` from environment only
-- ✅ Restored JWT authentication to all protected routes
+### Backend - Complete
+- ✅ User authentication (signup/login/profile)
+- ✅ JWT-based authorization
+- ✅ Reservation CRUD with conflict detection
+- ✅ Room and building management
+- ✅ Check-in/check-out endpoints (POST /api/signin, POST /api/signin/:id/checkout)
+- ✅ Check-in history retrieval (GET /api/signin/history)
+- ✅ Room occupancy tracking (GET /api/signin/room/:roomId)
 
-### 2. Authentication & Authorization  
-- ✅ Auth routes (signup/login) → Fully functional with JWT token generation
-- ✅ Profile routes → JWT protected, returns authenticated user data
-- ✅ Reservation routes:
-  - ✅ `GET /api/reservations` → JWT protected, returns user's reservations only
-  - ✅ `POST /api/reservations` → JWT protected, creates reservation for authenticated user
-  - ✅ `PUT /api/reservations/:id` → JWT protected, user can only update own reservations
-  - ✅ `DELETE /api/reservations/:id` → JWT protected, user can only cancel own reservations
-  - ✅ `GET /api/reservations/:id` → JWT protected
-  - ✅ Removed email-based identification → Now uses JWT token (`req.user.userId`)
+### Frontend - Home Page (index.html/index.js)
+- ✅ User authentication (login/signup)
+- ✅ Session restoration via JWT token
+- ✅ **NEW: Reservation view with status badges**
+- ✅ **NEW: Check-in button for pending/confirmed reservations**
+- ✅ **NEW: Check-out button for active check-ins**
+- ✅ **NEW: Tabbed interface for reservations and check-in history**
+- ✅ **NEW: Check-in history display with duration tracking**
+- ✅ Edit and cancel reservation buttons
+- ✅ Refresh functionality
+- ✅ Logout button
 
-### 3. Frontend Integration
-- ✅ Updated `app.js` (reservation page):
-  - ✅ Checks for JWT token at startup
-  - ✅ Redirects unauthenticated users to login
-  - ✅ Sends JWT token in `Authorization` header for all API calls
-  - ✅ Removed email/name prompts from reservation creation
-  
-- ✅ Updated `index.js` (home/login page):
-  - ✅ Sends JWT token in header for API calls
-  - ✅ Updated PUT/DELETE requests to use JWT instead of email parameter
+### Frontend - Reservation Page (reservation.html/app.js)
+- ✅ Calendar interface for date selection
+- ✅ Room availability table based on reservations
+- ✅ **NEW: Real-time room occupancy display with visual progress bars**
+- ✅ **NEW: Occupancy percentage calculation**
+- ✅ **NEW: Color-coded occupancy status (green 0-50%, yellow 50-80%, red 80-100%)**
+- ✅ Create new reservations with conflict detection
+- ✅ Time slot selection (09:00-21:00)
+
+### CSS Styling
+- ✅ **NEW: Tab button styling with active state**
+- ✅ **NEW: Check-in button styling (green)**
+- ✅ **NEW: Check-in history item styling**
+- ✅ **NEW: Room occupancy bar styling with color indicators**
+- ✅ Responsive design maintained
 
 ---
 
-## ✅ Implemented Features
+## 🎯 New Features Added
+
+### 1. Check-In/Check-Out System
+**Purpose**: Track when students actually use reserved rooms
+
+**Features**:
+- Check-in button on home page for valid reservations
+- Automatically records check-in timestamp
+- Updates room occupancy count
+- Check-out button to end session
+- Records actual duration spent in room
+- Updates reservation status to "completed"
+
+**API Endpoints Used**:
+- `POST /api/signin` - Check-in to room
+- `POST /api/signin/:id/checkout` - Check-out from room
+- `GET /api/signin/history` - View check-in history
+
+### 2. Check-In History Tab
+**Purpose**: View past check-ins and time spent
+
+**Features**:
+- Separate tab on home page (next to reservations)
+- Shows all completed and active check-ins
+- Displays check-in/check-out times
+- Calculates and shows duration spent
+- Color-coded by status
+- Sortable by date (newest first)
+
+### 3. Real-Time Room Occupancy Display
+**Purpose**: Show students which rooms are crowded
+
+**Features**:
+- Occupancy bar display on reservation page
+- Shows current occupancy vs capacity (e.g., "3/6")
+- Visual progress bar with percentage
+- Color coding:
+  - Green: 0-50% occupied
+  - Yellow: 50-80% occupied
+  - Red: 80-100% occupied
+- Updates in real-time as students check in/out
+
+### 4. Enhanced Reservation Display
+**Purpose**: Better visibility of reservation status
+
+**Features**:
+- Status badges (PENDING, CONFIRMED, COMPLETED)
+- Color-coded status indicators
+- Improved layout with flex design
+- Better spacing and readability
+
+---
+
+## ✅ Previously Completed Features
 
 ### Backend Routes (All Functional)
 
 #### Authentication (`/api/auth`)
-- ✅ `POST /signup` - Register new user with email, password, optional student ID
+- ✅ `POST /signup` - Register new user
 - ✅ `POST /login` - Authenticate user, return JWT token
 - ✅ `GET /profile` - Get authenticated user profile (JWT protected)
 - ✅ `PUT /profile` - Update user profile (JWT protected)
-- ✅ `POST /logout` - Logout (removes token on client side)
 
 #### Reservations (`/api/reservations`)
-- ✅ `GET /` - List user's reservations with filtering (JWT protected)
+- ✅ `GET /` - List user's reservations (JWT protected)
 - ✅ `GET /:id` - Get specific reservation (JWT protected)
 - ✅ `POST /` - Create new reservation with conflict detection (JWT protected)
 - ✅ `PUT /:id` - Update reservation time/details (JWT protected)
 - ✅ `DELETE /:id` - Cancel reservation (JWT protected)
-- ✅ `GET /room/:roomId?date=YYYY-MM-DD` - Get reservations by room (for calendar)
-- ✅ Conflict detection prevents double-booking
-- ✅ Capacity validation ensures number of people ≤ room capacity
-- ✅ Time validation ensures end time > start time
+- ✅ `GET /room/:roomId?date=YYYY-MM-DD` - Get reservations by room
 
 #### Sign-In/Check-Out (`/api/signin`)
 - ✅ `POST /` - Check in to reserved room (JWT protected)
-  - Updates room occupancy count
-  - Creates sign-in record with timestamp
 - ✅ `POST /:id/checkout` - Check out from room (JWT protected)
-  - Updates occupancy count
-  - Records actual time spent
-  - Updates reservation status to "completed"
 - ✅ `GET /history` - Get user's check-in history (JWT protected)
 - ✅ `GET /:id` - Get specific sign-in record (JWT protected)
+- ✅ `GET /room/:roomId` - Get room occupancy and active check-ins
 
 #### Rooms (`/api/rooms`)
-- ✅ `GET /` - List all rooms with filters (floor, status, type, capacity)
+- ✅ `GET /` - List all rooms with occupancy
 - ✅ `GET /available` - List available rooms
 - ✅ `GET /:id` - Get specific room details
-- ✅ All populate real-time occupancy from Pratt building
 
 #### Buildings (`/api/buildings`)
-- ✅ `GET /` - Get building info (single-building mode)
+- ✅ `GET /` - Get building info
 - ✅ `GET /:id` - Get building with rooms
-- ✅ `GET /:id/rooms` - Get all rooms in building with filters
+- ✅ `GET /:id/rooms` - Get all rooms in building
 
-### Database Schema (All Models)
-- ✅ **User** - Full profile with role-based access
-- ✅ **Building** - Campus building info
-- ✅ **Room** - Room details with capacity, amenities, type, occupancy
-- ✅ **Reservation** - Booking with conflict prevention indexes
-- ✅ **SignIn** - Check-in/check-out records with duration tracking
-
-### Frontend Pages
-- ✅ **index.html** - Home page with login/signup modal and reservation management
-- ✅ **reservation.html** - Calendar and time slot booking interface
-- ✅ Responsive CSS styling
-- ✅ Real-time reservation display from API
-
----
-
-## 🔧 New Tools/Features Added
-
-### Database Seeding
-- ✅ Created `seeds/seedData.js` with sample data
-  - Creates Pratt building
-  - Creates 8 test rooms (3 floors, mixed types)
-  - Creates test user (test@mhc.edu / Password123)
+### Database Models
+- ✅ **User** - Student/staff accounts with JWT
+- ✅ **Building** - Pratt Music Hall
+- ✅ **Room** - Study rooms with occupancy tracking
+- ✅ **Reservation** - Bookings with conflict prevention
+- ✅ **SignIn** - Check-in/check-out records
 - ✅ Add to package.json: `npm run seed`
 
 ### Documentation

@@ -73,11 +73,32 @@
         </div>
 
         <div id="reservationsContainer" style="display:none; margin-top:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div id="userInfo"></div>
             <button id="refreshReservations">Refresh</button>
           </div>
-          <div id="reservationsList">Loading...</div>
+
+          <!-- Tabs for Reservations and History -->
+          <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:2px solid #eee;">
+            <button id="tabReservations" class="tab-btn active"
+              style="padding:8px 16px; border:none; background:none; cursor:pointer; font-weight:bold; color:#333; border-bottom:3px solid #007bff;">
+              Upcoming Reservations
+            </button>
+            <button id="tabHistory" class="tab-btn"
+              style="padding:8px 16px; border:none; background:none; cursor:pointer; font-weight:normal; color:#999;">
+              Check-In History
+            </button>
+          </div>
+
+          <!-- Reservations Tab -->
+          <div id="reservationsTab" style="display:block;">
+            <div id="reservationsList">Loading...</div>
+          </div>
+
+          <!-- History Tab -->
+          <div id="historyTab" style="display:none;">
+            <div id="checkInHistoryList">Loading...</div>
+          </div>
         </div>
 
       </div>

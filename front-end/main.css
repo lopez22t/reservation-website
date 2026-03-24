@@ -226,3 +226,102 @@ nav ul li a {
     font-size: 1.4em;
   }
 }
+
+/* ==================== Tab Styling ==================== */
+.tab-btn {
+  padding: 8px 16px !important;
+  border: none !important;
+  background: none !important;
+  cursor: pointer !important;
+  font-weight: normal !important;
+  color: #999 !important;
+  margin-right: 8px !important;
+  transition: all 0.3s ease !important;
+  border-bottom: 3px solid transparent !important;
+  font-size: 14px !important;
+}
+
+.tab-btn.active {
+  font-weight: bold !important;
+  color: #333 !important;
+  border-bottom-color: #007bff !important;
+}
+
+.tab-btn:hover {
+  color: #333 !important;
+}
+
+/* ==================== Check-In/Check-Out Button Styling ==================== */
+#reservationsList button {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.3s ease;
+  margin-left: 4px;
+}
+
+#reservationsList button:hover {
+  opacity: 0.9;
+}
+
+/* Check-in button styling */
+button[style*="backgroundColor: rgb(40, 167, 69)"],
+button:has(+ :empty) {
+  background-color: #28a745 !important;
+  color: white !important;
+}
+
+button[style*="backgroundColor: rgb(40, 167, 69)"]:hover {
+  background-color: #218838 !important;
+}
+
+/* ==================== Check-in History Styling ==================== */
+#checkInHistoryList ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#checkInHistoryList li {
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+#checkInHistoryList li:hover {
+  background-color: #f0f0f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+/* ==================== Google Calendar Styling ==================== */
+.google-btn {
+  display: inline-block !important;
+  padding: 8px 16px !important;
+  background-color: #1f2937 !important;
+  color: white !important;
+  border: 1px solid #4285f4 !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  transition: all 0.3s ease !important;
+  margin: 0 4px !important;
+}
+
+.google-btn:hover {
+  background-color: #4285f4 !important;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3) !important;
+}
+
+#googleAuthDiv {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  list-style: none !important;
+}
