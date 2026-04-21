@@ -1,13 +1,32 @@
 const params = new URLSearchParams(window.location.search);
-const building = params.get("building") || "Ciruti";
+// Single-building front-end: default to Pratt (internal key)
+const building = params.get("building") || "Pratt";
 
-const roomData = {
-  Ciruti: ["Room 6B", "Room 6C", "Room 6D"],
-  Pratt: ["Room 201", "Room 202"]
-};
+// Display name shown in the UI
+const DISPLAY_NAME = 'Pratt Music Hall';
+
+// JWT token from localStorage
+let authToken = localStorage.getItem('mhc_token');
+
+// Check if user is authenticated
+if (!authToken) {
+  alert('Please log in first to make a reservation');
+  window.location.href = 'index.html';
+}
+
+// Room list fetched from backend
+let roomsList = []; // array of { _id, roomNumber, capacity, currentOccupancy }
+let roomOccupancy = {}; // map of roomId -> occupancy data
+
+function formatDateYYYYMMDD(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 const timeSlots = [
-  "09:00", "10:00", "11:00", "12:00", 
+  "09:00", "10:00", "11:00", "12:00",
   "13:00", "14:00", "15:00", "16:00",
   "17:00", "18:00", "19:00", "20:00",
   "21:00"
@@ -44,8 +63,8 @@ function renderCalendar() {
 
     // Highlight if it's the selected date
     const isSelected = selectedDate.getDate() === d &&
-                        selectedDate.getMonth() === month &&
-                        selectedDate.getFullYear() === year;
+      selectedDate.getMonth() === month &&
+      selectedDate.getFullYear() === year;
     if (isSelected) {
       cell.classList.add("selected");
     }
@@ -88,9 +107,28 @@ function reserveSlot(building, room, date, time) {
 }
 
 function renderReservationTable() {
-  const rooms = roomData[building];
   const container = document.querySelector(".reservation-table");
-  container.innerHTML = `<h2>${building} – ${selectedDate.toDateString()}</h2>`;
+  container.innerHTML = `<h2>${DISPLAY_NAME} – ${selectedDate.toDateString()}</h2>`;
+  const rooms = roomsList.map(r => r.roomNumber);
+
+  // Add occupancy info header
+  const occupancyInfo = document.createElement("div");
+  occupancyInfo.style.marginBottom = '16px';
+  occupancyInfo.style.padding = '12px';
+  occupancyInfo.style.backgroundColor = '#f0f0f0';
+  occupancyInfo.style.borderRadius = '4px';
+  occupancyInfo.innerHTML = '<strong>Room Occupancy (Real-time):</strong><br>' +
+    roomsList.map(r => {
+      const occ = roomOccupancy[r._id] || { currentOccupancy: 0, capacity: r.capacity };
+      const occupancyPercent = Math.round((occ.currentOccupancy / occ.capacity) * 100);
+      return `<div style="font-size:14px; margin-top:4px;">
+                <strong>${r.roomNumber}:</strong> ${occ.currentOccupancy}/${occ.capacity} (${occupancyPercent}%)
+                <span style="display:inline-block; width:100px; height:8px; background:#e0e0e0; border-radius:4px; margin-left:8px; vertical-align:middle;">
+                  <span style="display:inline-block; width:${occupancyPercent}%; height:8px; background:${occupancyPercent < 50 ? '#28a745' : occupancyPercent < 80 ? '#ffc107' : '#dc3545'}; border-radius:4px;"></span>
+                </span>
+              </div>`;
+    }).join('');
+  container.appendChild(occupancyInfo);
 
   const table = document.createElement("table");
   const thead = document.createElement("thead");
@@ -116,16 +154,134 @@ function renderReservationTable() {
   container.appendChild(table);
 }
 
-document.addEventListener("click", e => {
+document.addEventListener("click", async e => {
   if (e.target.matches("td.free")) {
-    const room = e.target.dataset.room;
+    const roomNumber = e.target.dataset.room;
     const time = e.target.dataset.time;
-    if (confirm(`Reserve ${room} at ${time}?`)) {
-      reserveSlot(building, room, selectedDate, time);
-      renderReservationTable();
+    // find room id
+    const roomObj = roomsList.find(r => r.roomNumber === roomNumber);
+    if (!roomObj) return alert('Room not found');
+
+    if (confirm(`Reserve ${roomNumber} at ${time}?`)) {
+      const numberOfPeople = parseInt(prompt('Number of people', '1')) || 1;
+      const purpose = prompt('Purpose (studying, meeting, other)', 'studying') || 'studying';
+
+      // build reservation payload
+      const dateStr = formatDateYYYYMMDD(selectedDate);
+      const startTime = time;
+      // default to 1 hour slot
+      const [h, m] = time.split(':').map(Number);
+      const endHour = String(h + 1).padStart(2, '0');
+      const endTime = `${endHour}:${String(m).padStart(2, '0')}`;
+
+      try {
+        const resp = await fetch('/api/reservations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + authToken
+          },
+          body: JSON.stringify({
+            room: roomObj._id,
+            reservationDate: dateStr,
+            startTime,
+            endTime,
+            purpose,
+            numberOfPeople
+          })
+        });
+
+        const json = await resp.json();
+        if (!resp.ok) throw new Error(json.message || 'Booking failed');
+
+        alert('✓ Reservation created successfully!');
+
+        // Try to sync with Google Calendar if user is connected
+        if (window.syncReservationToGoogle && json.data) {
+          const reservation = json.data;
+          reservation.room = { roomNumber: roomObj.roomNumber, _id: roomObj._id };
+          await syncReservationToGoogle(reservation);
+        }
+
+        await loadReservationsForDate();
+        renderReservationTable();
+      } catch (err) {
+        alert('Error creating reservation: ' + err.message);
+      }
     }
   }
 });
 
-renderCalendar();
-renderReservationTable();
+// Load rooms from backend and then load reservations
+async function init() {
+  try {
+    const roomsResp = await fetch('/api/rooms');
+    const roomsJson = await roomsResp.json();
+    roomsList = (roomsJson.data || []).map(r => ({
+      _id: r._id,
+      roomNumber: r.roomNumber,
+      capacity: r.capacity,
+      currentOccupancy: r.currentOccupancy || 0
+    }));
+
+    // Load occupancy for all rooms
+    await loadRoomOccupancy();
+
+    // Load Google Calendar events if available (wait for Google API to be ready)
+    if (window.loadGoogleCalendarEvents) {
+      setTimeout(() => {
+        window.loadGoogleCalendarEvents(
+          new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
+          new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0)
+        );
+      }, 1000);
+    }
+
+    await loadReservationsForDate();
+    renderCalendar();
+    renderReservationTable();
+  } catch (err) {
+    console.error('Init error', err);
+  }
+}
+
+// Load real-time occupancy for all rooms
+async function loadRoomOccupancy() {
+  try {
+    for (const room of roomsList) {
+      const resp = await fetch(`/api/signin/room/${room._id}`);
+      const json = await resp.json();
+      if (resp.ok && json.roomData) {
+        roomOccupancy[room._id] = json.roomData;
+      }
+    }
+  } catch (err) {
+    console.error('Error loading room occupancy:', err);
+  }
+}
+
+// Load reservations for currently selected date for all rooms
+async function loadReservationsForDate() {
+  reservations = [];
+  const dateStr = formatDateYYYYMMDD(selectedDate);
+  await Promise.all(roomsList.map(async room => {
+    try {
+      const resp = await fetch(`/api/reservations/room/${room._id}?date=${dateStr}`);
+      const json = await resp.json();
+      const items = json.data || [];
+      items.forEach(it => {
+        reservations.push({
+          building: DISPLAY_NAME,
+          room: room.roomNumber,
+          date: new Date(it.reservationDate).toDateString(),
+          time: it.startTime
+        });
+      });
+    } catch (err) {
+      console.error('Load reservations error for room', room._id, err);
+    }
+  }));
+}
+
+// Initialize app: load rooms & reservations then render UI
+init();

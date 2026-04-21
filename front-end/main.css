@@ -1,15 +1,20 @@
 :root {
-  --bg-color: #B4DAE8;       /* background color */
-  --primary-color: #8FBDEB;  /* main accent (nav bar, headings) */
-  --button-color: #38369A;   /* buttons */
-  --text-color: #333333;     /* default text */
+  --bg-color: #B4DAE8;
+  /* background color */
+  --primary-color: #8FBDEB;
+  /* main accent (nav bar, headings) */
+  --button-color: #38369A;
+  /* buttons */
+  --text-color: #333333;
+  /* default text */
   --accent-color: #4D4AD7;
   --bg-gradient: linear-gradient(to bottom, #0E6ECF, #8FBDEB);
 }
 
-body{
+body {
   background-color: var(--bg-gradient);
-  margin: 0; /*ensure no gap around nav*/
+  margin: 0;
+  /*ensure no gap around nav*/
 
 }
 
@@ -17,12 +22,12 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color:  var(--primary-color);
+  background-color: var(--primary-color);
   padding: 10px 20px;
-  
+
 }
 
-#site-name{
+#site-name {
   font-size: 2rem;
   font-weight: bolder;
 }
@@ -47,22 +52,25 @@ nav ul li a {
 .nav-btn {
   display: inline-block;
   padding: 10px 20px;
-  background-color: var(--button-color); 
+  background-color: var(--button-color);
   color: white;
-  border-radius: 6px; 
+  border-radius: 6px;
   font-weight: bold;
   transition: var(--bg-color) 0.3s;
 }
 
 .nav-btn:hover {
-  background-color: var(--accent-color); /* hover effect */
+  background-color: var(--accent-color);
+  /* hover effect */
   box-shadow: 0 2px 4px #38369A
 }
 
 .image-slasher {
   position: relative;
-  width: 100vw;   /* full viewport width */
-  height: 90vh;  /* full viewport height */
+  width: 100vw;
+  /* full viewport width */
+  height: 90vh;
+  /* full viewport height */
   overflow: clip;
 
 }
@@ -110,7 +118,8 @@ nav ul li a {
   position: absolute;
   bottom: 20px;
   left: 20px;
-  background-color: var(--button-color); /* semi-transparent background */
+  background-color: var(--button-color);
+  /* semi-transparent background */
   color: white;
   padding: 15px 20px;
   border-radius: 6px;
@@ -128,5 +137,191 @@ nav ul li a {
   font-size: 1.5em;
 }
 
+/* Modal styling for login/reservations */
+#loginModal {
+  display: none;
+  /* toggled via inline style/js */
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
 
+#loginModal .modal-card {
+  background: #fff;
+  color: var(--text-color);
+  width: 96%;
+  max-width: 720px;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  max-height: 84vh;
+  overflow: auto;
+}
 
+#loginModal label {
+  display: block;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+#loginModal input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.small-input {
+  width: 80px;
+  margin-right: 8px;
+  padding: 6px;
+}
+
+#reservationsList .res-meta {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+#loginModal h2 {
+  margin-top: 0;
+}
+
+#reservationsList ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#reservationsList li {
+  padding: 10px 8px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#reservationsList button {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#reservationsList button:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+  #loginModal .modal-card {
+    padding: 12px;
+  }
+
+  .building-info h3 {
+    font-size: 1.4em;
+  }
+}
+
+/* ==================== Tab Styling ==================== */
+.tab-btn {
+  padding: 8px 16px !important;
+  border: none !important;
+  background: none !important;
+  cursor: pointer !important;
+  font-weight: normal !important;
+  color: #999 !important;
+  margin-right: 8px !important;
+  transition: all 0.3s ease !important;
+  border-bottom: 3px solid transparent !important;
+  font-size: 14px !important;
+}
+
+.tab-btn.active {
+  font-weight: bold !important;
+  color: #333 !important;
+  border-bottom-color: #007bff !important;
+}
+
+.tab-btn:hover {
+  color: #333 !important;
+}
+
+/* ==================== Check-In/Check-Out Button Styling ==================== */
+#reservationsList button {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.3s ease;
+  margin-left: 4px;
+}
+
+#reservationsList button:hover {
+  opacity: 0.9;
+}
+
+/* Check-in button styling */
+button[style*="backgroundColor: rgb(40, 167, 69)"],
+button:has(+ :empty) {
+  background-color: #28a745 !important;
+  color: white !important;
+}
+
+button[style*="backgroundColor: rgb(40, 167, 69)"]:hover {
+  background-color: #218838 !important;
+}
+
+/* ==================== Check-in History Styling ==================== */
+#checkInHistoryList ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#checkInHistoryList li {
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+#checkInHistoryList li:hover {
+  background-color: #f0f0f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+/* ==================== Google Calendar Styling ==================== */
+.google-btn {
+  display: inline-block !important;
+  padding: 8px 16px !important;
+  background-color: #1f2937 !important;
+  color: white !important;
+  border: 1px solid #4285f4 !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  transition: all 0.3s ease !important;
+  margin: 0 4px !important;
+}
+
+.google-btn:hover {
+  background-color: #4285f4 !important;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3) !important;
+}
+
+#googleAuthDiv {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  list-style: none !important;
+}
