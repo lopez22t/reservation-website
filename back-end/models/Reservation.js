@@ -113,5 +113,11 @@ const reservationSchema = new mongoose.Schema({
 reservationSchema.index({ room: 1, reservationDate: 1, startTime: 1, endTime: 1, status: 1 });
 // Index for efficient queries of user's reservations sorted by date
 reservationSchema.index({ user: 1, createdAt: -1 });
+// Index for date range queries (from/to date filtering)
+reservationSchema.index({ reservationDate: 1 });
+// Index for status-based filtering
+reservationSchema.index({ status: 1 });
+// Compound index for room reservations queries
+reservationSchema.index({ room: 1, reservationDate: 1, status: 1 });
 
 module.exports = mongoose.model('Reservation', reservationSchema);

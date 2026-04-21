@@ -80,7 +80,8 @@ router.get('/', authMiddleware, async (req, res) => {
         const reservations = await Reservation.find(filter)
             .populate('room', 'roomNumber capacity roomType occupancyStatus')
             .populate('building', 'name code')
-            .sort({ reservationDate: 1, startTime: 1 });
+            .sort({ reservationDate: 1, startTime: 1 })
+            .limit(100); // Prevent excessive data transfer
 
         res.json({
             message: 'User reservations retrieved successfully',

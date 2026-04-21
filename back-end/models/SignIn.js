@@ -79,4 +79,13 @@ signInSchema.pre('save', function (next) {
     next();
 });
 
+/**
+ * Database Indexes
+ * Optimized for occupancy queries and check-in history
+ */
+signInSchema.index({ room: 1, status: 1 }); // For occupancy queries
+signInSchema.index({ user: 1, createdAt: -1 }); // For user check-in history
+signInSchema.index({ reservation: 1 }); // For reservation lookups
+signInSchema.index({ signInTime: 1 }); // For time-based queries
+
 module.exports = mongoose.model('SignIn', signInSchema);
