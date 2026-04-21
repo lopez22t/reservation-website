@@ -4,10 +4,45 @@
  */
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const Joi = require('joi');
 const { User } = require('../models');
 const authMiddleware = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 const router = express.Router();
+
+// ==================== VALIDATION SCHEMAS ====================
+const signupSchema = Joi.object({
+    firstName: Joi.string().min(1).max(50).required(),
+    lastName: Joi.string().min(1).max(50).required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().min(6).max(100).required(),
+    studentId: Joi.string().min(1).max(20).optional(),
+    phone: Joi.string().pattern(/^\+?[\d\s\-\(\)]+$/).optional(),
+    department: Joi.string().min(1).max(100).optional()
+});
+
+const loginSchema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required()
+});
+
+// ==================== VALIDATION MIDDLEWARE ====================
+const validateSignup = (req, res, next) => {
+    const { error } = signupSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    next();
+};
+
+const validateLogin = (req, res, next) => {
+    const { error } = loginSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    next();
+};
 
 /**
  * POST /api/auth/signup
@@ -20,14 +55,9 @@ const router = express.Router();
  * @body {string} phone - Optional phone number
  * @body {string} department - Optional department
  */
-router.post('/signup', async (req, res) => {
+router.post('/signup', validateSignup, async (req, res) => {
     try {
         const { firstName, lastName, email, password, studentId, phone, department } = req.body;
-
-        // Validate required fields
-        if (!firstName || !lastName || !email || !password) {
-            return res.status(400).json({ message: 'Missing required fields' });
-        }
 
         // Check if user already exists
         const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -74,14 +104,9 @@ router.post('/signup', async (req, res) => {
  * @body {string} email - User's email
  * @body {string} password - User's password
  */
-router.post('/login', async (req, res) => {
+router.post('/login', validateLogin, async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        // Validate required fields
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
-        }
 
         // Find user by email
         const user = await User.findOne({ email: email.toLowerCase() });
